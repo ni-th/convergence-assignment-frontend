@@ -36,6 +36,7 @@ const CustomerEditPage = () => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isCustomerLoaded, setIsCustomerLoaded] = useState(false)
 
   useEffect(() => {
     setEditId(searchParams.get('id') ?? '')
@@ -45,12 +46,14 @@ const CustomerEditPage = () => {
     const loadCustomer = async () => {
       if (!customerId || Number.isNaN(customerId)) {
         setError('')
+        setIsCustomerLoaded(false)
         return
       }
 
       try {
         setLoading(true)
         setError('')
+        setIsCustomerLoaded(false)
         const customer = await customerService.getCustomerById(customerId)
         setForm({
           name: customer.name ?? '',
@@ -66,8 +69,10 @@ const CustomerEditPage = () => {
               ? customer.addresses.slice(0, MAX_ADDRESSES).map((address) => normalizeAddress(address))
               : [createEmptyAddress()],
         })
+        setIsCustomerLoaded(true)
       } catch (err) {
         setError('Failed to load customer details.')
+        setIsCustomerLoaded(false)
       } finally {
         setLoading(false)
       }
@@ -320,7 +325,7 @@ const CustomerEditPage = () => {
           />
 
           <Stack direction="row" spacing={2}>
-            <Button type="submit" variant="contained" disabled={loading}>
+            <Button type="submit" variant="contained" disabled={loading || !isCustomerLoaded}>
               {loading ? 'Saving...' : 'Save Changes'}
             </Button>
             <Button variant="outlined" onClick={() => navigate('/customers')}>

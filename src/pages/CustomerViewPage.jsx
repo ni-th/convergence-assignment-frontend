@@ -113,6 +113,33 @@ const CustomerViewPage = () => {
             <Typography>
               <strong>Addresses:</strong> {customer.addresses?.length ?? 0}
             </Typography>
+            {(customer.addresses?.length ?? 0) > 0 ? (
+              <Stack spacing={1} sx={{ mt: 1 }}>
+                {customer.addresses.map((address, index) => (
+                  <Paper key={`address-${index}`} variant="outlined" sx={{ p: 1.5 }}>
+                    <Typography>
+                      <strong>Address {index + 1}:</strong>
+                    </Typography>
+                    <Typography>
+                      <strong>Line 1:</strong> {address.addressLine1 || '-'}
+                    </Typography>
+                    <Typography>
+                      <strong>Line 2:</strong> {address.addressLine2 || '-'}
+                    </Typography>
+                    <Typography>
+                      <strong>City:</strong> {address.city?.city || '-'}
+                    </Typography>
+                    <Typography>
+                      <strong>Country:</strong> {address.country?.country || '-'}
+                    </Typography>
+                  </Paper>
+                ))}
+              </Stack>
+            ) : (
+              <Typography>
+                <strong>Address Details:</strong> -
+              </Typography>
+            )}
           </Stack>
         </Paper>
       )}
