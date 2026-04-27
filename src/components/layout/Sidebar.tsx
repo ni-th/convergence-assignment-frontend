@@ -1,6 +1,18 @@
 import { Box, Button, Stack } from '@mui/material'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 
 const Sidebar = () => {
+  const location = useLocation()
+
+  const navItems = [
+    { label: 'Home', to: '/' },
+    { label: 'Customer List', to: '/customers' },
+    { label: 'Create Customer', to: '/customers/create' },
+    { label: 'Update Customer', to: '/customers/edit' },
+    { label: 'View Customer', to: '/customers/view' },
+    { label: 'Bulk Upload', to: '/customers/bulk-upload' },
+  ]
+
   return (
     <Box
       component="aside"
@@ -17,15 +29,22 @@ const Sidebar = () => {
     >
 
       <Stack spacing={2}>
-        <Button variant="contained" size="large" fullWidth>
-          Create Customer
-        </Button>
-        <Button variant="contained" size="large" fullWidth>
-          Update Customer
-        </Button>
-        <Button variant="contained" size="large" fullWidth>
-          View Customer
-        </Button>
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.to
+
+          return (
+            <Button
+              key={item.to}
+              component={RouterLink}
+              to={item.to}
+              variant={isActive ? 'contained' : 'outlined'}
+              size="large"
+              fullWidth
+            >
+              {item.label}
+            </Button>
+          )
+        })}
       </Stack>
     </Box>
   )

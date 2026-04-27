@@ -1,4 +1,5 @@
-import { Box, Typography } from '@mui/material'
+import { Box } from '@mui/material'
+import { Outlet } from 'react-router-dom'
 import Footer from './components/layout/Footer'
 import Header from './components/layout/Header'
 import Sidebar from './components/layout/Sidebar'
@@ -12,9 +13,7 @@ const App = () => {
         <Sidebar />
 
         <Box component="main" sx={{ flex: 1, p: 4 }}>
-          <Typography variant="h4">
-            Dashboard
-          </Typography>
+          <Outlet />
         </Box>
       </Box>
 
