@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import customerService from '../services/customerService'
 
@@ -20,6 +32,57 @@ const normalizeAddress = (address) => ({
   country: { country: address?.country?.country ?? '' },
 })
 
+const getBackendErrorMessage = (err, fallbackMessage) => {
+  const data = err?.response?.data
+
+  if (!data) {
+    return fallbackMessage
+  }
+
+  if (typeof data === 'string' && data.trim()) {
+    return data
+  }
+
+  if (typeof data.message === 'string' && data.message.trim()) {
+    return data.message
+  }
+
+  if (Array.isArray(data.errors) && data.errors.length > 0) {
+    return data.errors
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item
+        }
+
+        if (item?.defaultMessage) {
+          return item.defaultMessage
+        }
+
+        return ''
+      })
+      .filter(Boolean)
+      .join(', ')
+  }
+
+  if (data.fieldErrors && typeof data.fieldErrors === 'object') {
+    const firstFieldError = Object.entries(data.fieldErrors)
+      .map(([field, message]) => {
+        if (Array.isArray(message)) {
+          return `${field}: ${message.join(', ')}`
+        }
+
+        return `${field}: ${String(message)}`
+      })
+      .find(Boolean)
+
+    if (firstFieldError) {
+      return firstFieldError
+    }
+  }
+
+  return fallbackMessage
+}
+
 const CustomerEditPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -37,6 +100,13 @@ const CustomerEditPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [isCustomerLoaded, setIsCustomerLoaded] = useState(false)
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
+  const [errorDialogMessage, setErrorDialogMessage] = useState('')
+
+  const showErrorDialog = (message) => {
+    setErrorDialogMessage(message)
+    setErrorDialogOpen(true)
+  }
 
   useEffect(() => {
     setEditId(searchParams.get('id') ?? '')
@@ -71,7 +141,9 @@ const CustomerEditPage = () => {
         })
         setIsCustomerLoaded(true)
       } catch (err) {
-        setError('Failed to load customer details.')
+        const backendMessage = getBackendErrorMessage(err, 'Failed to load customer details.')
+        setError(backendMessage)
+        showErrorDialog(backendMessage)
         setIsCustomerLoaded(false)
       } finally {
         setLoading(false)
@@ -205,7 +277,9 @@ const CustomerEditPage = () => {
       })
       navigate(`/customers/view?id=${customerId}`)
     } catch (err) {
-      setError('Failed to update customer.')
+      const backendMessage = getBackendErrorMessage(err, 'Failed to update customer.')
+      setError(backendMessage)
+      showErrorDialog(backendMessage)
     } finally {
       setLoading(false)
     }
@@ -334,6 +408,20 @@ const CustomerEditPage = () => {
           </Stack>
         </Stack>
       </Paper>
+
+      <Dialog open={errorDialogOpen} onClose={() => setErrorDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Request Failed</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" sx={{ mt: 1 }}>
+            {errorDialogMessage}
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setErrorDialogOpen(false)} autoFocus>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

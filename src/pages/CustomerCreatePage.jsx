@@ -1,5 +1,17 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import customerService from '../services/customerService'
 
@@ -13,6 +25,57 @@ const createEmptyAddress = () => ({
   country: { country: '' },
 })
 
+const getBackendErrorMessage = (err, fallbackMessage) => {
+  const data = err?.response?.data
+
+  if (!data) {
+    return fallbackMessage
+  }
+
+  if (typeof data === 'string' && data.trim()) {
+    return data
+  }
+
+  if (typeof data.message === 'string' && data.message.trim()) {
+    return data.message
+  }
+
+  if (Array.isArray(data.errors) && data.errors.length > 0) {
+    return data.errors
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item
+        }
+
+        if (item?.defaultMessage) {
+          return item.defaultMessage
+        }
+
+        return ''
+      })
+      .filter(Boolean)
+      .join(', ')
+  }
+
+  if (data.fieldErrors && typeof data.fieldErrors === 'object') {
+    const firstFieldError = Object.entries(data.fieldErrors)
+      .map(([field, message]) => {
+        if (Array.isArray(message)) {
+          return `${field}: ${message.join(', ')}`
+        }
+
+        return `${field}: ${String(message)}`
+      })
+      .find(Boolean)
+
+    if (firstFieldError) {
+      return firstFieldError
+    }
+  }
+
+  return fallbackMessage
+}
+
 const CustomerCreatePage = () => {
   const navigate = useNavigate()
   const [form, setForm] = useState({
@@ -25,6 +88,13 @@ const CustomerCreatePage = () => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
+  const [errorDialogMessage, setErrorDialogMessage] = useState('')
+
+  const showErrorDialog = (message) => {
+    setErrorDialogMessage(message)
+    setErrorDialogOpen(true)
+  }
 
   const onChange = (field) => (event) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }))
@@ -149,7 +219,12 @@ const CustomerCreatePage = () => {
 
       navigate(`/customers/view?id=${created.id}`)
     } catch (err) {
-      setError('Failed to create customer. Please check your values and try again.')
+      const backendMessage = getBackendErrorMessage(
+        err,
+        'Failed to create customer. Please check your values and try again.',
+      )
+      setError(backendMessage)
+      showErrorDialog(backendMessage)
     } finally {
       setLoading(false)
     }
@@ -252,6 +327,20 @@ const CustomerCreatePage = () => {
           </Stack>
         </Stack>
       </Paper>
+
+      <Dialog open={errorDialogOpen} onClose={() => setErrorDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Request Failed</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" sx={{ mt: 1 }}>
+            {errorDialogMessage}
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setErrorDialogOpen(false)} autoFocus>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
