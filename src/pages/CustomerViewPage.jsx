@@ -79,11 +79,13 @@ const CustomerViewPage = () => {
         <Button variant="outlined" onClick={() => navigate('/customers')}>
           Back to List
         </Button>
-        {customerId && !Number.isNaN(customerId) && (
-          <Button variant="contained" onClick={() => navigate(`/customers/edit?id=${customerId}`)}>
-            Edit Customer
-          </Button>
-        )}
+        <Button
+          variant="contained"
+          disabled={!customer || loading}
+          onClick={() => navigate(`/customers/edit?id=${customer?.id}`)}
+        >
+          Edit Customer
+        </Button>
       </Stack>
 
       {error && <Alert severity="error">{error}</Alert>}
