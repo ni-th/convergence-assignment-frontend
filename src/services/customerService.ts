@@ -24,9 +24,8 @@ const getValidatedMobileNumbers = (input: CustomerRequestInput): string[] => {
 }
 
 const toCustomerRequest = (input: CustomerRequestInput): CustomerRequest => {
-	const { mobileNumber, mobileNumbers, ...rest } = input
 	return {
-		...rest,
+		...input,
 		mobileNumbers: getValidatedMobileNumbers(input),
 	}
 }
@@ -57,11 +56,25 @@ export const updateCustomer = async (id: number, customer: CustomerRequestInput)
 	return response.data
 }
 
+export const uploadCustomerExcel = async (file: File): Promise<string> => {
+	const formData = new FormData()
+	formData.append('file', file)
+
+	const response = await apiClient.post<string>('customer/upload', formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data',
+		},
+	})
+
+	return typeof response.data === 'string' ? response.data : 'Upload successful'
+}
+
 const customerService = {
 	getCustomers,
 	getCustomerById,
 	createCustomer,
 	updateCustomer,
+	uploadCustomerExcel,
 }
 
 export default customerService
