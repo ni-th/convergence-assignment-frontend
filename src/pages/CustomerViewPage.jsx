@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import customerService from '../services/customerService'
 
@@ -9,13 +9,19 @@ const CustomerViewPage = () => {
   const customerId = useMemo(() => Number(searchParams.get('id')), [searchParams])
 
   const [customer, setCustomer] = useState(null)
+  const [searchId, setSearchId] = useState(searchParams.get('id') ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
+    setSearchId(searchParams.get('id') ?? '')
+  }, [searchParams])
+
+  useEffect(() => {
     const loadCustomer = async () => {
       if (!customerId || Number.isNaN(customerId)) {
-        setError('Customer id is missing. Open view from Customer List.')
+        setCustomer(null)
+        setError('')
         return
       }
 
@@ -34,11 +40,40 @@ const CustomerViewPage = () => {
     loadCustomer()
   }, [customerId])
 
+  const handleSearch = (event) => {
+    event.preventDefault()
+    const normalized = searchId.trim()
+
+    if (!normalized || Number.isNaN(Number(normalized))) {
+      setError('Please enter a valid numeric customer ID.')
+      setCustomer(null)
+      return
+    }
+
+    setError('')
+    navigate(`/customers/view?id=${Number(normalized)}`)
+  }
+
   return (
     <Box>
       <Typography variant="h4" fontWeight={700}>
         Customer Details
       </Typography>
+
+      <Paper component="form" variant="outlined" onSubmit={handleSearch} sx={{ mt: 2, p: 2, maxWidth: 700 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <TextField
+            label="Customer ID"
+            value={searchId}
+            onChange={(event) => setSearchId(event.target.value)}
+            placeholder="Enter customer id"
+            fullWidth
+          />
+          <Button type="submit" variant="contained">
+            Search
+          </Button>
+        </Stack>
+      </Paper>
 
       <Stack direction="row" spacing={2} sx={{ mt: 2, mb: 3 }}>
         <Button variant="outlined" onClick={() => navigate('/customers')}>
