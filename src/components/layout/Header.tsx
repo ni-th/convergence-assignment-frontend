@@ -15,7 +15,7 @@ const Header = () => {
         borderColor: 'divider',
       }}
     >
-      <Typography variant="h5" fontWeight={700}>
+      <Typography variant="h5">
         CMS
       </Typography>
     </Box>
