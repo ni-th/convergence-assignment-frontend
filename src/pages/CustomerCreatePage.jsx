@@ -60,7 +60,6 @@ const CustomerCreatePage = () => {
             fullWidth
           />
           <TextField
-            label="Date Of Birth"
             type="date"
             value={form.dateOfBirth}
             onChange={onChange('dateOfBirth')}

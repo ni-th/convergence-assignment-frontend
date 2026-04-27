@@ -7,6 +7,7 @@ const CustomerEditPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const customerId = useMemo(() => Number(searchParams.get('id')), [searchParams])
+  const [editId, setEditId] = useState(searchParams.get('id') ?? '')
 
   const [form, setForm] = useState({
     name: '',
@@ -20,9 +21,13 @@ const CustomerEditPage = () => {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    setEditId(searchParams.get('id') ?? '')
+  }, [searchParams])
+
+  useEffect(() => {
     const loadCustomer = async () => {
       if (!customerId || Number.isNaN(customerId)) {
-        setError('Customer id is missing. Open edit from Customer List.')
+        setError('')
         return
       }
 
@@ -55,7 +60,7 @@ const CustomerEditPage = () => {
   const onSubmit = async (event) => {
     event.preventDefault()
     if (!customerId || Number.isNaN(customerId)) {
-      setError('Customer id is missing. Open edit from Customer List.')
+      setError('Please enter a valid customer ID and load customer details.')
       return
     }
 
@@ -71,11 +76,37 @@ const CustomerEditPage = () => {
     }
   }
 
+  const onLoadCustomer = () => {
+    const normalizedId = editId.trim()
+    if (!normalizedId || Number.isNaN(Number(normalizedId))) {
+      setError('Please enter a valid numeric customer ID.')
+      return
+    }
+
+    setError('')
+    navigate(`/customers/edit?id=${Number(normalizedId)}`)
+  }
+
   return (
     <Box>
       <Typography variant="h4" fontWeight={700}>
         Edit Customer
       </Typography>
+
+      <Paper variant="outlined" sx={{ mt: 2, p: 2, maxWidth: 640 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <TextField
+            label="Customer ID"
+            value={editId}
+            onChange={(event) => setEditId(event.target.value)}
+            placeholder="Enter customer id"
+            fullWidth
+          />
+          <Button variant="contained" onClick={onLoadCustomer}>
+            Load Customer
+          </Button>
+        </Stack>
+      </Paper>
 
       <Paper component="form" variant="outlined" onSubmit={onSubmit} sx={{ mt: 3, p: 3, maxWidth: 640 }}>
         <Stack spacing={2}>
@@ -91,7 +122,6 @@ const CustomerEditPage = () => {
             fullWidth
           />
           <TextField
-            label="Date Of Birth"
             type="date"
             value={form.dateOfBirth}
             onChange={onChange('dateOfBirth')}
