@@ -9,6 +9,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
+  TablePagination,
   TableRow,
   Typography,
 } from '@mui/material'
@@ -16,17 +17,25 @@ import { useNavigate } from 'react-router-dom'
 import customerService from '../services/customerService'
 
 const CustomerListPage = () => {
+  const PAGE_SIZE = 50
   const navigate = useNavigate()
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [page, setPage] = useState(0)
+  const [totalElements, setTotalElements] = useState(0)
 
-  const loadCustomers = async () => {
+  const loadCustomers = async (targetPage = page) => {
     try {
       setLoading(true)
       setError('')
-      const page = await customerService.getCustomers({ page: 0, size: 20, sort: 'id,asc' })
-      setCustomers(page.content ?? [])
+      const pageResponse = await customerService.getCustomers({
+        page: targetPage,
+        size: PAGE_SIZE,
+        sort: 'id,asc',
+      })
+      setCustomers(pageResponse.content ?? [])
+      setTotalElements(pageResponse.totalElements ?? 0)
     } catch (err) {
       setError('Failed to load customers. Please try again.')
     } finally {
@@ -35,8 +44,12 @@ const CustomerListPage = () => {
   }
 
   useEffect(() => {
-    loadCustomers()
-  }, [])
+    loadCustomers(page)
+  }, [page])
+
+  const onPageChange = (_, newPage) => {
+    setPage(newPage)
+  }
 
   return (
     <Box>
@@ -48,7 +61,7 @@ const CustomerListPage = () => {
         <Button variant="contained" onClick={() => navigate('/customers/create')}>
           Create Customer
         </Button>
-        <Button variant="outlined" onClick={loadCustomers}>
+        <Button variant="outlined" onClick={() => loadCustomers(page)}>
           Refresh
         </Button>
       </Stack>
@@ -116,6 +129,14 @@ const CustomerListPage = () => {
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={totalElements}
+          page={page}
+          onPageChange={onPageChange}
+          rowsPerPage={PAGE_SIZE}
+          rowsPerPageOptions={[PAGE_SIZE]}
+        />
       </Paper>
     </Box>
   )
