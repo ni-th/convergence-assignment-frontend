@@ -1,5 +1,5 @@
 import apiClient from './apiClient'
-import type { Customer, PageRequest, PageResponse } from '../types/types'
+import type { Customer, PageRequest, PageResponse, UploadStatus } from '../types/types'
 
 export type CustomerRequest = Omit<Customer, 'id'>
 
@@ -56,17 +56,22 @@ export const updateCustomer = async (id: number, customer: CustomerRequestInput)
 	return response.data
 }
 
-export const uploadCustomerExcel = async (file: File): Promise<string> => {
+export const uploadCustomerExcelAsync = async (file: File): Promise<{ uploadId: string; message: string }> => {
 	const formData = new FormData()
 	formData.append('file', file)
 
-	const response = await apiClient.post<string>('customer/upload', formData, {
+	const response = await apiClient.post<{ uploadId: string; message: string }>('customer/upload-async', formData, {
 		headers: {
 			'Content-Type': 'multipart/form-data',
 		},
 	})
 
-	return typeof response.data === 'string' ? response.data : 'Upload successful'
+	return response.data
+}
+
+export const getUploadStatus = async (uploadId: string): Promise<UploadStatus> => {
+	const response = await apiClient.get<UploadStatus>(`customer/upload-status/${uploadId}`)
+	return response.data
 }
 
 const customerService = {
@@ -74,7 +79,8 @@ const customerService = {
 	getCustomerById,
 	createCustomer,
 	updateCustomer,
-	uploadCustomerExcel,
+	uploadCustomerExcelAsync,
+	getUploadStatus,
 }
 
 export default customerService

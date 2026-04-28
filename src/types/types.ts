@@ -41,3 +41,15 @@ export interface PageResponse<T> {
 	numberOfElements: number
 	empty: boolean
 }
+
+export interface UploadStatus {
+	uploadId: string
+	status: string
+	message?: string
+	progress?: number
+	totalRecords?: number
+	processedRecords?: number
+	failedRecords?: number
+	createdAt?: string
+	updatedAt?: string
+}

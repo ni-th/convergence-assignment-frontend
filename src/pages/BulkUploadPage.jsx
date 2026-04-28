@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Alert,
   Box,
@@ -7,6 +7,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  LinearProgress,
   Paper,
   Stack,
   Typography,
@@ -21,6 +22,48 @@ const BulkUploadPage = () => {
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
   const [errorDialogOpen, setErrorDialogOpen] = useState(false)
   const [errorDialogMessage, setErrorDialogMessage] = useState('')
+  const [uploadId, setUploadId] = useState(null)
+  const [uploadStatus, setUploadStatus] = useState(null)
+  const [polling, setPolling] = useState(false)
+
+  useEffect(() => {
+    let intervalId
+    if (uploadId && polling) {
+      intervalId = setInterval(async () => {
+        try {
+          const status = await customerService.getUploadStatus(uploadId)
+          setUploadStatus(status)
+
+          if (status.status === 'COMPLETED') {
+            setPolling(false)
+            setSuccessMessage(`Upload completed successfully! Processed ${status.processedRecords || 0} records.`)
+            setSuccessDialogOpen(true)
+            setSelectedFile(null)
+            setUploadId(null)
+            setUploadStatus(null)
+          } else if (status.status === 'FAILED') {
+            setPolling(false)
+            setError(status.message || 'Upload failed')
+            showErrorDialog(status.message || 'Upload failed')
+            setUploadId(null)
+            setUploadStatus(null)
+          }
+        } catch (err) {
+          setPolling(false)
+          setError('Failed to check upload status')
+          showErrorDialog('Failed to check upload status')
+          setUploadId(null)
+          setUploadStatus(null)
+        }
+      }, 2000) // Poll every 2 seconds
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [uploadId, polling])
 
   const showErrorDialog = (message) => {
     setErrorDialogMessage(message)
@@ -51,15 +94,15 @@ const BulkUploadPage = () => {
     try {
       setLoading(true)
       setError('')
-      const responseMessage = await customerService.uploadCustomerExcel(selectedFile)
-      setSuccessMessage(responseMessage || 'Upload successful')
-      setSuccessDialogOpen(true)
-      setSelectedFile(null)
+      const response = await customerService.uploadCustomerExcelAsync(selectedFile)
+      setUploadId(response.uploadId)
+      setUploadStatus({ status: 'STARTED', message: response.message })
+      setPolling(true)
     } catch (err) {
       const backendMessage =
         typeof err?.response?.data === 'string' && err.response.data.trim()
           ? err.response.data
-          : 'Failed to upload file. Please try again.'
+          : 'Failed to start upload. Please try again.'
       setError(backendMessage)
       showErrorDialog(backendMessage)
     } finally {
@@ -81,6 +124,39 @@ const BulkUploadPage = () => {
 
           {error && <Alert severity="error">{error}</Alert>}
 
+          {uploadStatus && (
+            <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Upload Progress
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Status: {uploadStatus.status}
+              </Typography>
+              {uploadStatus.message && (
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {uploadStatus.message}
+                </Typography>
+              )}
+              {uploadStatus.totalRecords && (
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="body2">
+                    Progress: {uploadStatus.processedRecords || 0} / {uploadStatus.totalRecords} records
+                  </Typography>
+                  <LinearProgress
+                    variant="determinate"
+                    value={uploadStatus.totalRecords > 0 ? ((uploadStatus.processedRecords || 0) / uploadStatus.totalRecords) * 100 : 0}
+                    sx={{ mt: 1 }}
+                  />
+                </Box>
+              )}
+              {polling && (
+                <Typography variant="body2" color="text.secondary">
+                  Checking status...
+                </Typography>
+              )}
+            </Paper>
+          )}
+
           <Button variant="outlined" component="label">
             Choose XLSX File
             <input type="file" hidden accept=".xlsx" onChange={onFileChange} />
@@ -91,8 +167,12 @@ const BulkUploadPage = () => {
           </Typography>
 
           <Box>
-            <Button variant="contained" onClick={onUpload} disabled={loading}>
-              {loading ? 'Uploading...' : 'Upload'}
+            <Button 
+              variant="contained" 
+              onClick={onUpload} 
+              disabled={loading || polling}
+            >
+              {loading ? 'Starting Upload...' : polling ? 'Upload in Progress...' : 'Upload'}
             </Button>
           </Box>
         </Stack>
