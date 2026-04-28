@@ -16,7 +16,7 @@ const Footer = () => {
       }}
     >
       <Typography variant="body2" color="text.secondary">
-        CMS &copy; 2024. All rights reserved.
+        CMS &copy; 2026. All rights reserved.
       </Typography>
     </Box>
   )
