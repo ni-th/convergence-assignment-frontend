@@ -307,7 +307,7 @@ const CustomerCreatePage = () => {
               Add Address
             </Button>
           )}
-
+          <label>Date of Birth</label>
           <TextField
             type="date"
             value={form.dateOfBirth}
