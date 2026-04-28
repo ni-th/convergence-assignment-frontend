@@ -13,8 +13,41 @@ This application provides a user-friendly interface for performing CRUD operatio
 - **Customer Create**: Add new customers with form validation.
 - **Customer Edit**: Modify existing customer information.
 - **Customer View**: Display detailed information for a specific customer.
-- **Bulk Upload**: Upload multiple customers via file import.
+- **Bulk Upload**: Asynchronous bulk upload of customer data via Excel files with real-time progress tracking.
 - **Responsive Design**: Optimized for desktop and mobile devices using Material-UI and Tailwind CSS.
+
+## Bulk Upload Feature
+
+The application includes an advanced asynchronous bulk upload system for importing customer data from Excel files (.xlsx format).
+
+### How It Works
+
+1. **File Selection**: Choose an Excel file containing customer data
+2. **Async Upload Initiation**: Click upload to start the process - receives an immediate upload ID
+3. **Real-time Progress Tracking**: Monitor upload progress with live status updates
+4. **Background Processing**: Backend processes records asynchronously
+5. **Status Monitoring**: Frontend polls for status updates every 2 seconds
+6. **Completion Notification**: Success/failure notifications with detailed results
+
+### Upload Status States
+
+- **STARTED**: Upload initiated, processing begins
+- **PROCESSING**: Records being processed with progress counter
+- **COMPLETED**: Upload successful with record count summary
+- **FAILED**: Upload failed with error details
+
+### API Endpoints
+
+- `POST /customer/upload-async`: Initiates async upload, returns uploadId
+- `GET /customer/upload-status/{uploadId}`: Retrieves current upload status
+
+### User Experience
+
+- **Progress Bar**: Visual progress indicator showing records processed/total
+- **Status Messages**: Real-time status updates and messages
+- **Success Dialog**: Confirmation with processed record count
+- **Error Dialog**: Detailed error information for failed uploads
+- **Non-blocking UI**: Users can navigate while upload processes in background
 
 ## Tech Stack
 
@@ -52,6 +85,7 @@ This application provides a user-friendly interface for performing CRUD operatio
 
 - Navigate through the application using the sidebar menu.
 - Use the customer management pages to perform operations on customer data.
+- **Bulk Upload**: Go to the Bulk Upload page to import multiple customers from Excel files. The system provides real-time progress tracking and handles large files asynchronously.
 - Ensure the backend API is running and configured in `src/services/apiClient.ts`.
 
 ## Scripts
